@@ -1,0 +1,10 @@
+[project]
+name = "voice_style"
+version = "0.1.0"
+# 纯标准库实现：无第三方依赖，因此 [project].dependencies 为空，
+# 也不写 plugin.toml 的 [plugin.dependencies]（市场 CLI 会把该表当成插件 id 列表）。
+dependencies = []
+
+[tool.ruff]
+# 与市场 CI 的 `--exclude vendor` 口径一致；本插件没有 vendor 目录。
+exclude = ["vendor"]

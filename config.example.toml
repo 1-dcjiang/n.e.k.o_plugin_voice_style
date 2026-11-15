@@ -1,0 +1,19 @@
+# 可变的默认值放这里；plugin.toml 只保留发布用的固定清单。
+# 本文件不含 [plugin] 段——插件身份与入口只在 plugin.toml 里声明。
+
+[plugin_runtime]
+enabled = true
+auto_start = true
+
+[voice_card]
+spec = "voice-card"
+spec_version = "1.0"
+name = "示例语气卡"
+self = "我"
+user = "{MASTER_NAME}"
+language = "跟随对方使用的语言"
+register = "neutral"
+emoji_policy = "sparse"
+flourish = []
+refusal_style = "直接说做不到，并给一个可行的替代"
+inject_on_startup = false

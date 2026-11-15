@@ -1,0 +1,42 @@
+[plugin]
+id = "voice_style"
+name = "语气风格"
+version = "0.1.0"
+type = "plugin"
+entry = "plugin.plugins.voice_style:VoiceStylePlugin"
+description = "语气风格（表达层）：只管怎么说——自称、称呼、语言、语气、emoji、口头禅与拒绝方式；不管说什么，不修改记忆、人格与事实，也不改变是否拒绝。与角色卡冲突时以角色卡为准。"
+short_description = "Voice style layer: it decides how to say it, never what to say."
+keywords = [
+    "语气", "口吻", "语调", "口头禅", "称呼", "怎么说话", "说话方式", "语气卡",
+    "风格", "人设语气", "emoji", "表情",
+    "voice", "tone", "style", "speech", "phrasing",
+]
+passive = true
+
+[plugin.author]
+name = "1-dcjiang"
+
+[plugin.sdk]
+recommended = ">=0.1.0,<0.2.0"
+supported = ">=0.1.0,<0.3.0"
+
+[plugin_runtime]
+enabled = true
+auto_start = true
+timeout = 10
+
+[plugin.store]
+enabled = false
+
+[voice_card]
+spec = "voice-card"
+spec_version = "1.0"
+name = "示例语气卡"
+self = "我"
+user = "{MASTER_NAME}"
+language = "跟随对方使用的语言"
+register = "neutral"
+emoji_policy = "sparse"
+flourish = []
+refusal_style = "直接说做不到，并给一个可行的替代"
+inject_on_startup = false
