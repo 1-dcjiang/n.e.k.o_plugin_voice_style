@@ -16,4 +16,11 @@ code-abyss 的 Persona Voice Card v1.0：
   - 删除记忆机制、init/安装步骤与宿主适配表，只保留表达层；
   - 卡片标识由 persona-voice-card 改为 voice-card，schema $id 指向本仓库。
 
+版本记录：
+  0.1.0  首个可发布版本：两个入口、配置页 schema、34 个测试。
+  0.1.1  合并「补齐默认值」的重复逻辑（merge_defaults）；截断时保留固定尾句；
+         新增插件类行为测试（SDK 替身 + 假上下文，覆盖生命周期、重载、
+         注入形态与坏卡不推送）；smoke 测试改为 unittest.TestCase，
+         pytest 与 unittest 两条 runner 均可收集。
+
 本插件不包含记忆、人格或事实层，也不会写入宿主的角色卡与记忆。

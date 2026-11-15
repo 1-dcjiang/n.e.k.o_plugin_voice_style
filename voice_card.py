@@ -43,7 +43,8 @@ EMOJI_POLICIES: frozenset[str] = frozenset({"none", "sparse", "free"})
 MAX_FLOURISH = 5
 MAX_FLOURISH_LEN = 80
 
-#: 渲染结果的总长度上限，防止一张卡把提示词撑爆。
+#: 渲染结果的总长度上限。各字段本身都有上限，正常卡片远达不到这里，
+#: 它是给外部调用方（比如入口传 ``max_chars``）留的硬闸；截断时正文让位、尾句保留。
 MAX_PROMPT_CHARS = 1200
 
 #: 配置里缺少字段时的兜底值。``{MASTER_NAME}`` 由宿主在注入边界展开。
@@ -210,12 +211,29 @@ def render_voice_prompt(card: object, *, max_chars: int = MAX_PROMPT_CHARS) -> s
         lines.append("口头禅（偶尔用，别每句都带）：" + "、".join(f"「{item}」" for item in phrases))
 
     lines.append(f"需要拒绝时的说法：{_clean(data['refusal_style'], LIMITS['refusal_style'])}")
-    lines.append(FOOTER)
 
-    prompt = "\n".join(lines)
-    if len(prompt) > max_chars:
-        prompt = prompt[: max_chars - 1].rstrip() + "…"
-    return prompt
+    body = "\n".join(lines)
+    # 先给固定尾句留好位置，再截正文：尾句是这条提示词的边界声明，不能被截掉。
+    tail = "\n" + FOOTER
+    room = max_chars - len(tail)
+    if room >= 1 and len(body) > room:
+        body = body[: room - 1].rstrip() + "…"
+    prompt = body + tail
+    # max_chars 连尾句都放不下时才会走到这里：整体截断，调用方给的上限优先。
+    return prompt[:max_chars]
+
+
+def merge_defaults(section: object) -> dict[str, Any]:
+    """把 ``[voice_card]`` 配置段补成一张完整卡片。
+
+    缺字段用 :data:`DEFAULT_CARD` 兜底，配置页里多写的键在这里被丢掉
+    （插件另行报告这些键，见 ``unknown_section_keys``）。
+    """
+    source = section if isinstance(section, dict) else {}
+    return {
+        key: source[key] if key in source else DEFAULT_CARD[key]
+        for key in ALLOWED_KEYS
+    }
 
 
 def render_from_section(section: object) -> tuple[str, list[str]]:
@@ -224,18 +242,8 @@ def render_from_section(section: object) -> tuple[str, list[str]]:
     这是插件启动路径用的入口：配置里少写几个键不会让整张卡失效，
     但类型/长度/枚举错误仍会被拦住。
     """
-    source = section if isinstance(section, dict) else {}
-    card: dict[str, Any] = {}
-    for key in ALLOWED_KEYS:
-        if key in source:
-            card[key] = source[key]
-        elif key in DEFAULT_CARD:
-            card[key] = DEFAULT_CARD[key]
-
+    card = merge_defaults(section)
     problems = validate_card(card)
     if problems:
         return "", problems
-    try:
-        return render_voice_prompt(card), []
-    except VoiceCardError as exc:  # 理论上不会触发，保留兜底
-        return "", [str(exc)]
+    return render_voice_prompt(card), []
