@@ -1,0 +1,19 @@
+voice_style
+Copyright (c) 2026 1-dcjiang
+
+本插件改编自 persona-and-memory 的声音卡（voice card）部分：
+  https://github.com/1-dcjiang/persona-and-memory
+  原作者 1-dcjiang，MIT License。原始 MIT 声明见本目录 LICENSE，逐字保留。
+
+上游声音卡的设计纪律（短语原样保留、不设判断字段、拒绝措辞单列）来自
+code-abyss 的 Persona Voice Card v1.0：
+  https://github.com/telagod/code-abyss
+  MIT License。该仓库声明其未拷贝他人代码。
+
+本插件相对上游的改动：
+  - 新增提示词渲染（render_voice_prompt）与 [voice_card] 配置段读取；
+  - 修复校验器在坏输入下的崩溃，改为返回问题清单而不抛栈；
+  - 删除记忆机制、init/安装步骤与宿主适配表，只保留表达层；
+  - 卡片标识由 persona-voice-card 改为 voice-card，schema $id 指向本仓库。
+
+本插件不包含记忆、人格或事实层，也不会写入宿主的角色卡与记忆。

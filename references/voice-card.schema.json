@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/1-dcjiang/n.e.k.o_plugin_voice_style/references/voice-card.schema.json",
+  "title": "Voice Card",
+  "description": "A voice card states how a character speaks: address, language, register, emoji policy, set phrases and refusal wording. It carries no memory, no facts and no judgment. This schema is descriptive; runtime validation is stricter (it rejects blank-but-whitespace values that minLength cannot catch).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "spec",
+    "spec_version",
+    "name",
+    "self",
+    "user",
+    "language",
+    "register",
+    "emoji_policy",
+    "flourish",
+    "refusal_style"
+  ],
+  "properties": {
+    "spec": {
+      "const": "voice-card",
+      "description": "Format identifier."
+    },
+    "spec_version": {
+      "const": "1.0",
+      "description": "Format version."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "description": "A label for this card. Not the character name."
+    },
+    "self": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16,
+      "description": "How the character refers to itself."
+    },
+    "user": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 24,
+      "description": "How the character addresses the user. May contain {MASTER_NAME}."
+    },
+    "language": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "description": "Which language to answer in."
+    },
+    "register": {
+      "enum": ["casual", "neutral", "formal"],
+      "description": "Speaking register."
+    },
+    "emoji_policy": {
+      "enum": ["none", "sparse", "free"],
+      "description": "How much emoji to use."
+    },
+    "flourish": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+      },
+      "description": "Optional verbatim phrases, used occasionally."
+    },
+    "refusal_style": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "description": "How to phrase a refusal. Wording only."
+    }
+  }
+}
