@@ -21,6 +21,7 @@ from plugin.sdk.plugin import (
 from .voice_card import (
     ALLOWED_KEYS,
     DEFAULT_CARD,
+    merge_defaults,
     render_from_section,
     validate_card,
 )
@@ -150,17 +151,8 @@ class VoiceStylePlugin(NekoPluginBase):
             )
         self._inject_on_startup = bool(section.get("inject_on_startup", False))
 
-        card: dict[str, Any] = {}
-        for key in ALLOWED_KEYS:
-            if key in section:
-                card[key] = section[key]
-            elif key in DEFAULT_CARD:
-                card[key] = DEFAULT_CARD[key]
-        self._card = card
-
-        prompt, problems = render_from_section(card)
-        self._problems = problems
-        self._prompt = prompt
+        self._card = merge_defaults(section)
+        self._prompt, self._problems = render_from_section(section)
 
     def _push_prompt(self) -> None:
         """把渲染结果作为只读上下文交给宿主（默认关闭，见 README 的「方案 B」）。"""

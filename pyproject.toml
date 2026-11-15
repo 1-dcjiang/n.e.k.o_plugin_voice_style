@@ -1,6 +1,6 @@
 [project]
 name = "voice_style"
-version = "0.1.0"
+version = "0.1.1"
 # 纯标准库实现：无第三方依赖，因此 [project].dependencies 为空，
 # 也不写 plugin.toml 的 [plugin.dependencies]（市场 CLI 会把该表当成插件 id 列表）。
 dependencies = []
@@ -8,3 +8,9 @@ dependencies = []
 [tool.ruff]
 # 与市场 CI 的 `--exclude vendor` 口径一致；本插件没有 vendor 目录。
 exclude = ["vendor"]
+
+[tool.pytest.ini_options]
+# 工程根目录自带 __init__.py（它就是 Neko 插件包本身），pytest 收集 tests/ 时会
+# 顺着包链把根包导进来，而插件包硬依赖 plugin.sdk。tests/conftest.py 负责先装
+# SDK 替身，所以这里不需要额外参数，pytest 与 unittest 两条 runner 都能跑。
+testpaths = ["tests"]
