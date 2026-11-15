@@ -1,0 +1,254 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "plugin_runtime": {
+      "type": "object",
+      "title": "Runtime settings",
+      "description": "Plugin availability and automatic startup settings.",
+      "x-title-i18n": {
+        "zh-CN": "运行设置",
+        "zh-TW": "執行設定",
+        "en": "Runtime settings",
+        "ja": "実行設定"
+      },
+      "x-description-i18n": {
+        "zh-CN": "插件的启用与自动启动设置。",
+        "zh-TW": "外掛程式的啟用與自動啟動設定。",
+        "en": "Plugin availability and automatic startup settings.",
+        "ja": "プラグインの有効化と自動起動の設定。"
+      },
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "Enable plugin",
+          "description": "Allow this plugin to be loaded.",
+          "x-title-i18n": {
+            "zh-CN": "启用插件",
+            "zh-TW": "啟用外掛程式",
+            "en": "Enable plugin",
+            "ja": "プラグインを有効化"
+          },
+          "x-description-i18n": {
+            "zh-CN": "是否允许加载此插件。",
+            "zh-TW": "是否允許載入此外掛程式。",
+            "en": "Allow this plugin to be loaded.",
+            "ja": "このプラグインの読み込みを許可します。"
+          },
+          "default": true
+        },
+        "auto_start": {
+          "type": "boolean",
+          "title": "Start automatically",
+          "description": "Start this plugin when the plugin system starts.",
+          "x-title-i18n": {
+            "zh-CN": "自动启动",
+            "zh-TW": "自動啟動",
+            "en": "Start automatically",
+            "ja": "自動起動"
+          },
+          "x-description-i18n": {
+            "zh-CN": "插件系统启动时自动启动此插件。",
+            "zh-TW": "外掛程式系統啟動時自動啟動此外掛程式。",
+            "en": "Start this plugin when the plugin system starts.",
+            "ja": "プラグインシステムの起動時に自動起動します。"
+          },
+          "default": true
+        }
+      }
+    },
+    "voice_card": {
+      "type": "object",
+      "title": "Voice card",
+      "description": "How to speak: address, language, register, emoji policy, set phrases and refusal wording. It never changes facts, memory or refusals.",
+      "x-title-i18n": {
+        "zh-CN": "语气风格卡",
+        "zh-TW": "語氣風格卡",
+        "en": "Voice card",
+        "ja": "口調カード"
+      },
+      "x-description-i18n": {
+        "zh-CN": "只管怎么说：自称、称呼、语言、语气、emoji、口头禅与拒绝措辞。不改变事实、记忆与是否拒绝。",
+        "zh-TW": "只管怎麼說：自稱、稱呼、語言、語氣、emoji、口頭禪與拒絕措辭。不改變事實、記憶與是否拒絕。",
+        "en": "How to speak: address, language, register, emoji policy, set phrases and refusal wording. It never changes facts, memory or refusals.",
+        "ja": "話し方を決めるだけ：自称、呼び方、言語、語調、絵文字、口癖、断り方。事実・記憶・拒否の判断は変えません。"
+      },
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 32,
+          "title": "Card name",
+          "description": "A label for this voice card. It is not the character name and does not rename the character.",
+          "x-title-i18n": {
+            "zh-CN": "卡片名称",
+            "zh-TW": "卡片名稱",
+            "en": "Card name",
+            "ja": "カード名"
+          },
+          "x-description-i18n": {
+            "zh-CN": "这张语气卡的标签，不是角色名，也不会改角色名。",
+            "zh-TW": "這張語氣卡的標籤，不是角色名，也不會改角色名。",
+            "en": "A label for this voice card. It is not the character name and does not rename the character.",
+            "ja": "このカードの名前。キャラクター名ではなく、キャラクター名も変更しません。"
+          },
+          "default": "示例语气卡"
+        },
+        "self": {
+          "type": "string",
+          "maxLength": 16,
+          "title": "Self reference",
+          "description": "How the character refers to itself, for example 我 / 本机 / 姐姐. Only affects wording.",
+          "x-title-i18n": {
+            "zh-CN": "自称",
+            "zh-TW": "自稱",
+            "en": "Self reference",
+            "ja": "自称"
+          },
+          "x-description-i18n": {
+            "zh-CN": "角色如何称呼自己，例如「我」「本机」「姐姐」。只影响措辞。",
+            "zh-TW": "角色如何稱呼自己，例如「我」「本機」「姐姐」。只影響措辭。",
+            "en": "How the character refers to itself, for example 我 / 本机 / 姐姐. Only affects wording.",
+            "ja": "キャラクターが自分をどう呼ぶか。語尾の言い方だけに影響します。"
+          },
+          "default": "我"
+        },
+        "user": {
+          "type": "string",
+          "maxLength": 24,
+          "title": "How to address the user",
+          "description": "How the character addresses the user. Supports the {MASTER_NAME} placeholder, which the host expands per session.",
+          "x-title-i18n": {
+            "zh-CN": "称呼对方",
+            "zh-TW": "稱呼對方",
+            "en": "How to address the user",
+            "ja": "相手の呼び方"
+          },
+          "x-description-i18n": {
+            "zh-CN": "角色如何称呼对方。支持 {MASTER_NAME} 占位符，由宿主按会话展开。",
+            "zh-TW": "角色如何稱呼對方。支援 {MASTER_NAME} 佔位符，由宿主依工作階段展開。",
+            "en": "How the character addresses the user. Supports the {MASTER_NAME} placeholder, which the host expands per session.",
+            "ja": "相手の呼び方。{MASTER_NAME} プレースホルダーはホストが展開します。"
+          },
+          "default": "{MASTER_NAME}"
+        },
+        "language": {
+          "type": "string",
+          "maxLength": 80,
+          "title": "Language",
+          "description": "Which language to answer in. This is a wording preference, not a translation instruction.",
+          "x-title-i18n": {
+            "zh-CN": "语言",
+            "zh-TW": "語言",
+            "en": "Language",
+            "ja": "言語"
+          },
+          "x-description-i18n": {
+            "zh-CN": "用哪种语言回答。这是措辞偏好，不是翻译指令。",
+            "zh-TW": "用哪種語言回答。這是措辭偏好，不是翻譯指令。",
+            "en": "Which language to answer in. This is a wording preference, not a translation instruction.",
+            "ja": "どの言語で答えるか。言い方の好みであり、翻訳指示ではありません。"
+          },
+          "default": "跟随对方使用的语言"
+        },
+        "register": {
+          "type": "string",
+          "enum": ["casual", "neutral", "formal"],
+          "title": "Register",
+          "description": "Speaking register: casual, neutral or formal. It does not change what is said.",
+          "x-title-i18n": {
+            "zh-CN": "语气",
+            "zh-TW": "語氣",
+            "en": "Register",
+            "ja": "語調"
+          },
+          "x-description-i18n": {
+            "zh-CN": "说话语气：随意、中性或正式。不改变说什么。",
+            "zh-TW": "說話語氣：隨意、中性或正式。不改變說什麼。",
+            "en": "Speaking register: casual, neutral or formal. It does not change what is said.",
+            "ja": "話し方の語調：カジュアル、ニュートラル、フォーマル。内容は変えません。"
+          },
+          "default": "neutral"
+        },
+        "emoji_policy": {
+          "type": "string",
+          "enum": ["none", "sparse", "free"],
+          "title": "Emoji policy",
+          "description": "How much emoji to use: none, at most one per message, or freely.",
+          "x-title-i18n": {
+            "zh-CN": "emoji 策略",
+            "zh-TW": "emoji 策略",
+            "en": "Emoji policy",
+            "ja": "絵文字の方針"
+          },
+          "x-description-i18n": {
+            "zh-CN": "emoji 使用量：完全不用、每条最多一个、或随意使用。",
+            "zh-TW": "emoji 使用量：完全不用、每條最多一個、或隨意使用。",
+            "en": "How much emoji to use: none, at most one per message, or freely.",
+            "ja": "絵文字の使用量：使わない、1メッセージに最大1個、自由に使う。"
+          },
+          "default": "sparse"
+        },
+        "flourish": {
+          "type": "array",
+          "maxItems": 5,
+          "title": "Set phrases",
+          "description": "Optional verbatim phrases, at most five. They are used occasionally, not in every sentence.",
+          "x-title-i18n": {
+            "zh-CN": "口头禅",
+            "zh-TW": "口頭禪",
+            "en": "Set phrases",
+            "ja": "口癖"
+          },
+          "x-description-i18n": {
+            "zh-CN": "可原样使用的短语，最多五条。偶尔用，不要每句都带。",
+            "zh-TW": "可原樣使用的短語，最多五條。偶爾用，不要每句都帶。",
+            "en": "Optional verbatim phrases, at most five. They are used occasionally, not in every sentence.",
+            "ja": "そのまま使える短い決まり文句。最大5つ。たまに使い、毎文には使わない。"
+          },
+          "default": [],
+          "items": {
+            "type": "string",
+            "maxLength": 80
+          }
+        },
+        "refusal_style": {
+          "type": "string",
+          "maxLength": 120,
+          "title": "Refusal wording",
+          "description": "How to phrase a refusal. It changes the wording only; whether to refuse is decided by facts, safety rules and the character card.",
+          "x-title-i18n": {
+            "zh-CN": "拒绝措辞",
+            "zh-TW": "拒絕措辭",
+            "en": "Refusal wording",
+            "ja": "断り方"
+          },
+          "x-description-i18n": {
+            "zh-CN": "拒绝时怎么说。只改措辞；是否拒绝由事实、安全规则与角色卡决定。",
+            "zh-TW": "拒絕時怎麼說。只改措辭；是否拒絕由事實、安全規則與角色卡決定。",
+            "en": "How to phrase a refusal. It changes the wording only; whether to refuse is decided by facts, safety rules and the character card.",
+            "ja": "断るときの言い方。言い方だけを変え、断るかどうかは事実・安全ルール・キャラクターカードが決めます。"
+          },
+          "default": "直接说做不到，并给一个可行的替代"
+        },
+        "inject_on_startup": {
+          "type": "boolean",
+          "title": "Inject on startup (experimental)",
+          "description": "Off by default. When on, the plugin pushes the rendered text as a read-only context message at startup. It is a chat message, not a system prompt, so history compaction may drop it and the host may wrap it as a plugin message.",
+          "x-title-i18n": {
+            "zh-CN": "启动时自动注入（实验）",
+            "zh-TW": "啟動時自動注入（實驗）",
+            "en": "Inject on startup (experimental)",
+            "ja": "起動時に自動注入（実験）"
+          },
+          "x-description-i18n": {
+            "zh-CN": "默认关闭。开启后在启动时把渲染文本作为只读上下文消息推送。它是聊天消息而非系统提示词，历史压缩可能丢弃，宿主也可能把它包成「来自插件的新消息」。",
+            "zh-TW": "預設關閉。開啟後在啟動時把渲染文字作為唯讀上下文訊息推送。它是聊天訊息而非系統提示詞，歷史壓縮可能丟棄，宿主也可能包成「來自外掛程式的新訊息」。",
+            "en": "Off by default. When on, the plugin pushes the rendered text as a read-only context message at startup. It is a chat message, not a system prompt, so history compaction may drop it and the host may wrap it as a plugin message.",
+            "ja": "既定ではオフ。オンにすると起動時に描画テキストを読み取り専用のコンテキストメッセージとして送ります。システムプロンプトではなくチャットメッセージのため、履歴圧縮で失われる可能性があります。"
+          },
+          "default": false
+        }
+      }
+    }
+  }
+}
