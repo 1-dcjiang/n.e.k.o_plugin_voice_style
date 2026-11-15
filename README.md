@@ -33,7 +33,8 @@ voice_style/
 ├── voice_card.py          # 校验 + 渲染（纯标准库）
 ├── references/voice-card.schema.json
 ├── examples/voice-card.json
-├── tests/
+├── tests/                 # test_smoke / test_voice_card / test_plugin + SDK 替身
+├── pyproject.toml         # 项目元数据、ruff 与 pytest 配置
 ├── LICENSE
 └── NOTICE
 ```
@@ -75,6 +76,10 @@ plugin/plugins/voice_style/
 
 校验器比 `references/voice-card.schema.json` 严一处：**纯空白字符串**也会被拒，
 而 JSON Schema 的 `minLength: 1` 拦不住 `"   "`。
+
+渲染结果默认上限 1200 字符。正常卡片远达不到这个数（各字段本身都有上限），它是给
+外部调用方留的硬闸；真的触发截断时只截正文并补 `…`，`以上只影响措辞…` 那句固定尾句
+完整保留——边界声明不能被截掉。
 
 `config.schema.json` 只提供表单展示，不是校验边界：`required` / `pattern` 不被表单支持，
 运行时合法性仍由 `voice_card.validate_card` 判定。
@@ -151,11 +156,20 @@ warning，并在 `voice_card_status` 的 `unknown_section_keys` 里列出来。
 
 ## 自检
 
+两条 runner 都能跑（CI 走 pytest，本机习惯 unittest）：
+
 ```bash
 python -m unittest discover -s tests -v
+python -m pytest -q
+
 ruff check --ignore-noqa --isolated --no-respect-gitignore --target-version py311 \
   --line-length 120 --select E4,E7,E9,F,I --exclude vendor .
 ```
+
+测试不依赖 N.E.K.O 源码树：`tests/_sdk_stub.py` 提供一份最小的
+`plugin.sdk.plugin` 替身，`tests/conftest.py` 在 pytest 收集前装上它。插件类测试一律
+强制走替身（真基类会接管 `self.config`，假上下文便不可控）——所以「逻辑对不对」由
+本地测试保证，「接口接不接得上」由宿主实机跑入口验证，两件事分开。
 
 ---
 
