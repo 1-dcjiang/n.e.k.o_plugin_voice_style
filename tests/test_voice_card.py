@@ -194,10 +194,15 @@ class RenderTests(unittest.TestCase):
         prompt = vc.render_voice_prompt(make_card(self="我\n喜欢说"))
         self.assertIn("自称：我 喜欢说", prompt)
 
-    def test_render_truncates(self):
+    def test_render_truncates_body_but_keeps_footer(self):
         prompt = vc.render_voice_prompt(make_card(language="语" * 80, flourish=["口" * 80] * 5), max_chars=60)
         self.assertLessEqual(len(prompt), 60)
-        self.assertTrue(prompt.endswith("…"))
+        self.assertIn("…", prompt, "正文被截断时要留省略号")
+        self.assertTrue(prompt.endswith(vc.FOOTER), "边界尾句不能被截掉")
+
+    def test_render_extreme_budget_still_bounded(self):
+        prompt = vc.render_voice_prompt(make_card(), max_chars=20)
+        self.assertLessEqual(len(prompt), 20)
 
     def test_render_has_no_memory_mechanics(self):
         prompt = vc.render_voice_prompt(make_card())
@@ -219,6 +224,18 @@ class RenderTests(unittest.TestCase):
         prompt, problems = vc.render_from_section({"self": 42})
         self.assertEqual(prompt, "")
         self.assertTrue(any("self must be a string" in item for item in problems))
+
+
+class MergeDefaultsTests(unittest.TestCase):
+    def test_fills_missing_and_drops_extra(self):
+        merged = vc.merge_defaults({"self": "本机", "memory": ["用户喜欢猫"]})
+        self.assertEqual(merged["self"], "本机")
+        self.assertNotIn("memory", merged, "多余键不应该混进卡片")
+        self.assertEqual(set(merged), set(vc.ALLOWED_KEYS))
+
+    def test_non_dict_section_falls_back_to_defaults(self):
+        for value in (None, [], "不是配置段"):
+            self.assertEqual(vc.merge_defaults(value), dict(vc.DEFAULT_CARD))
 
 
 class SchemaAlignmentTests(unittest.TestCase):
