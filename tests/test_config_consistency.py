@@ -7,10 +7,9 @@
 from __future__ import annotations
 
 import json
+import tomllib
 import unittest
 from pathlib import Path
-
-import tomllib
 
 from voice_card import (
     ALLOWED_KEYS,

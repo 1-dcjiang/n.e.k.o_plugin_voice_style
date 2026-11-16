@@ -6,6 +6,9 @@ version = "0.1.2"
 dependencies = []
 
 [tool.ruff]
+# 与市场 CI 的 `--isolated --target-version py311` 口径一致；
+# 否则本地会把 tomllib 误判成第三方包，导入分组与 CI 不一致。
+target-version = "py311"
 # 与市场 CI 的 `--exclude vendor` 口径一致；本插件没有 vendor 目录。
 exclude = ["vendor"]
 
