@@ -22,5 +22,10 @@ code-abyss 的 Persona Voice Card v1.0：
          新增插件类行为测试（SDK 替身 + 假上下文，覆盖生命周期、重载、
          注入形态与坏卡不推送）；smoke 测试改为 unittest.TestCase，
          pytest 与 unittest 两条 runner 均可收集。
+  0.1.2  修复 push_message 返回 submitted=False 被当成成功；注入使用
+         coalesce_key，并在 reload / config_change 后按同一键重推；
+         inject_on_startup 只接受真正的 bool；未知键与坏类型 warning 去重；
+         README 明确当前角色卡没有可编辑的 system_prompt 入口，需主程序支持；
+         新增配置一致性与真 SDK 契约测试，修复默认值漂移与 Ruff 问题。
 
 本插件不包含记忆、人格或事实层，也不会写入宿主的角色卡与记忆。

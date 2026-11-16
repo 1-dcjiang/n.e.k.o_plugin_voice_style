@@ -51,14 +51,14 @@ MAX_PROMPT_CHARS = 1200
 DEFAULT_CARD: dict[str, Any] = {
     "spec": SPEC_NAME,
     "spec_version": SPEC_VERSION,
-    "name": "语气风格",
+    "name": "示例语气卡",
     "self": "我",
     "user": "{MASTER_NAME}",
     "language": "跟随对方使用的语言",
     "register": "neutral",
     "emoji_policy": "sparse",
     "flourish": [],
-    "refusal_style": "直接说明做不到，并给出一个可行的替代",
+    "refusal_style": "直接说做不到，并给一个可行的替代",
 }
 
 REGISTER_TEXT: dict[str, str] = {
@@ -167,8 +167,7 @@ def load_card(path: str | os.PathLike[str]) -> tuple[dict[str, Any] | None, list
     except UnicodeDecodeError as exc:
         return None, [f"文件不是合法的 UTF-8：{exc}"]
 
-    if raw.startswith("\ufeff"):
-        raw = raw[1:]
+    raw = raw.removeprefix("\ufeff")
 
     try:
         data = json.loads(raw)
@@ -195,11 +194,15 @@ def render_voice_prompt(card: object, *, max_chars: int = MAX_PROMPT_CHARS) -> s
 
     lines = [
         "【说话方式——只管怎么说，不改变说什么】",
-        f"自称：{_clean(data['self'], LIMITS['self'])}；"
-        f"称呼对方：{_clean(data['user'], LIMITS['user'])}",
-        f"语言：{_clean(data['language'], LIMITS['language'])}；"
-        f"语气：{REGISTER_TEXT[data['register']]}；"
-        f"emoji：{EMOJI_TEXT[data['emoji_policy']]}",
+        (
+            f"自称：{_clean(data['self'], LIMITS['self'])}；"
+            f"称呼对方：{_clean(data['user'], LIMITS['user'])}"
+        ),
+        (
+            f"语言：{_clean(data['language'], LIMITS['language'])}；"
+            f"语气：{REGISTER_TEXT[data['register']]}；"
+            f"emoji：{EMOJI_TEXT[data['emoji_policy']]}"
+        ),
     ]
 
     phrases = [

@@ -33,7 +33,7 @@ voice_style/
 ├── voice_card.py          # 校验 + 渲染（纯标准库）
 ├── references/voice-card.schema.json
 ├── examples/voice-card.json
-├── tests/                 # test_smoke / test_voice_card / test_plugin + SDK 替身
+├── tests/                 # smoke / card / plugin / 配置一致性 / 真 SDK 契约
 ├── pyproject.toml         # 项目元数据、ruff 与 pytest 配置
 ├── LICENSE
 └── NOTICE
@@ -94,19 +94,33 @@ warning，并在 `voice_card_status` 的 `unknown_section_keys` 里列出来。
 主程序的初始提示词是写死的（`main_logic/core/notify.py` 的 `_build_initial_prompt`），
 没有给插件留 `plugin_prompt` 钩子。所以插件只能把文本交给你，由你放进提示词。
 
-### 方案 A：手动粘贴（推荐，稳定）
+### 方案 A：手动粘贴（当前版本需要主程序支持）
 
 1. 在插件面板执行入口 `render_voice_prompt`；
-2. 把它返回的 `prompt` 粘贴到角色卡的「附加角色指引（Additional role guidance）」；
-3. 粘贴后插件可以不再启动——文本已经是角色卡的一部分。
+2. 它返回的 `prompt` 只能交给主程序的系统提示词入口；当前角色卡表单**没有**
+   可编辑的 `system_prompt`：
+   - 角色卡「设定」是页签名，不是内置字段；
+   - `system_prompt` 被写成 `_reserved` 保留字段，`reserved_fields_utils.js` /
+     `core-and-upload.js` 会把它从普通设定表单里隐藏；
+   - 在「设定」页新增一个名为「设定」的自定义字段，只会作为自定义字段保存，
+     不会写进运行时的 `system_prompt`。
+3. 如果你的主程序版本提供了系统指令 / `system_prompt` 编辑入口（或你通过
+   角色数据接口自行写入），再把 `prompt` 粘进去；否则这条路径需要主程序支持，
+   见方案 C。
+
+主程序里同样**没有**名为「附加角色指引（Additional role guidance）」的可编辑
+输入框。那段英文前缀是 `utils/config_manager/persona_payload.py` 在拼 system
+prompt 时，按 `persona_override.prompt_guidance` / 人设预设追加的，不是角色卡字段。
 
 优点：随角色卡持久化、不受历史压缩影响、不会被套上「来自插件的新消息」措辞。
-缺点：卡片改了要重新粘贴一次。
+缺点：当前 UI 没有入口；卡片改了要重新粘贴一次。
 
 ### 方案 B：启动时自动注入（可选，默认关闭）
 
 把 `inject_on_startup` 设为 `true`。插件在 `startup` 调
-`push_message(visibility=[], ai_behavior="read")`，把渲染文本作为只读上下文推进对话。
+`push_message(visibility=[], ai_behavior="read", coalesce_key="voice_style:card")`，
+把渲染文本作为只读上下文推进对话。`reload` / `config_change` 后如果开关仍开着，
+会按同一个 `coalesce_key` 重推，避免配置改了模型还拿旧卡。
 
 这是**聊天消息**，不是系统提示词，因此：
 
@@ -114,6 +128,11 @@ warning，并在 `voice_card_status` 的 `unknown_section_keys` 里列出来。
 - 历史压缩可能把它丢掉；
 - 宿主可能在外层加一句「来自插件的新消息」，模型未必按原文理解；
 - 会话中途的系统级注入在实时语音下是否吞掉回复，尚未在真实宿主上验证。
+
+`push_message` 的返回值只代表 SDK 本地接收，不代表宿主消费或模型生成。插件会检查
+`submitted`：返回 `submitted=False`（如 `backpressure` / `transport_error` /
+`payload_too_large`）时只记一条带 `reason` 的 warning，不把正文写进日志，并在
+`startup` / `reload` / `config_change` 的返回值里给出 `injected=false`；不会当成成功。
 
 所以默认关闭。README 不把方案 B 说成「推荐」，也不宣称它已验证。
 
@@ -156,7 +175,7 @@ warning，并在 `voice_card_status` 的 `unknown_section_keys` 里列出来。
 
 ## 自检
 
-两条 runner 都能跑（CI 走 pytest，本机习惯 unittest）：
+两条 runner 都能跑（本机习惯 unittest，pytest 也可）：
 
 ```bash
 python -m unittest discover -s tests -v
@@ -167,9 +186,16 @@ ruff check --ignore-noqa --isolated --no-respect-gitignore --target-version py31
 ```
 
 测试不依赖 N.E.K.O 源码树：`tests/_sdk_stub.py` 提供一份最小的
-`plugin.sdk.plugin` 替身，`tests/conftest.py` 在 pytest 收集前装上它。插件类测试一律
-强制走替身（真基类会接管 `self.config`，假上下文便不可控）——所以「逻辑对不对」由
-本地测试保证，「接口接不接得上」由宿主实机跑入口验证，两件事分开。
+`plugin.sdk.plugin` 替身，`tests/conftest.py` 在 pytest 收集前装上它。插件逻辑测试
+在加载单个插件类时临时强制走替身，加载完恢复原来的 `sys.modules`，避免污染同进程的
+其它测试。
+
+如果测试运行时能找到真 SDK（例如把本仓库挂到
+`neko/plugin/plugins/voice_style`，并在那棵树里跑测试，向上两级就是
+`neko/plugin/sdk`），`tests/test_real_sdk_contract.py` 会在一个独立子进程里用真
+`NekoPluginBase` 实例化插件并跑 `collect_entries`，检查入口 id、生命周期与
+`push_message` 的 `coalesce_key` 参数没有和宿主契约脱节；找不到真 SDK 时明确 skip。
+「逻辑对不对」由替身测试保证，「接口接不接得上」由真 SDK 契约测试兜底，两件事分开。
 
 ---
 

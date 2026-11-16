@@ -34,7 +34,7 @@ def install(force: bool = False) -> str:
     假上下文，真基类会接管 ``self.config`` 等方法，行为就不再可控。
     """
     global _state
-    if _state == "stub":
+    if _state == "stub" and not force:
         return _state
     if not force:
         if _state == "real":
@@ -130,16 +130,34 @@ def load_plugin_class(root: Path):
     """把插件工程根目录按「包」加载，返回插件类。
 
     插件类测试一律走替身：真基类会接管 ``self.config``，假上下文便不再可控。
+    加载期间临时替换 ``sys.modules``，加载完恢复，避免污染同进程的真 SDK 契约测试。
     """
-    install(force=True)
-    spec = importlib.util.spec_from_file_location(
-        PACKAGE,
-        root / "__init__.py",
-        submodule_search_locations=[str(root)],
-    )
-    if spec is None or spec.loader is None:
-        raise RuntimeError("无法加载插件包")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[PACKAGE] = module
-    spec.loader.exec_module(module)
-    return module.VoiceStylePlugin
+    module_names = ("plugin", "plugin.sdk", "plugin.sdk.plugin", PACKAGE)
+    previous = {name: sys.modules.get(name) for name in module_names}
+    try:
+        install(force=True)
+        spec = importlib.util.spec_from_file_location(
+            PACKAGE,
+            root / "__init__.py",
+            submodule_search_locations=[str(root)],
+        )
+        if spec is None or spec.loader is None:
+            raise RuntimeError("无法加载插件包")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[PACKAGE] = module
+        spec.loader.exec_module(module)
+        return module.VoiceStylePlugin
+    finally:
+        global _state
+        for name, old_module in previous.items():
+            if old_module is None:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = old_module
+        restored = previous.get("plugin.sdk.plugin")
+        if restored is None:
+            _state = "pending"
+        elif getattr(restored, "__file__", None):
+            _state = "real"
+        else:
+            _state = "stub"

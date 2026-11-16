@@ -1,7 +1,7 @@
 [plugin]
 id = "voice_style"
 name = "语气风格"
-version = "0.1.1"
+version = "0.1.2"
 type = "plugin"
 entry = "plugin.plugins.voice_style:VoiceStylePlugin"
 description = "语气风格（表达层）：只管怎么说——自称、称呼、语言、语气、emoji、口头禅与拒绝方式；不管说什么，不修改记忆、人格与事实，也不改变是否拒绝。与角色卡冲突时以角色卡为准。"
