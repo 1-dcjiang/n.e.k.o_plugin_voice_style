@@ -1,0 +1,75 @@
+# 本仓自己的测试门禁。
+#
+# 为什么需要它：verify.yml 只是复用市场模板（plugin-market-verify.yml@main），那个
+# reusable workflow 只跑 Ruff、CLI 的 sync / check 和 evidence 生成，**不跑插件
+# pytest**。于是 tests/test_real_sdk_contract.py 那条「接不接得上真宿主」的契约
+# 测试从来不会在 CI 里执行，只在本地手动跑——宿主契约漂移就会一直不被发现。
+#
+# 这个 workflow 把插件挂进真 N.E.K.O 源码树再跑 pytest，让契约测试真的跑起来。
+name: Plugin Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-tests-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  plugin-pytest:
+    name: Plugin pytest (mounted into N.E.K.O)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEKO_REPOSITORY: Project-N-E-K-O/N.E.K.O
+      NEKO_REF: main
+      PLUGIN_ID: voice_style
+    steps:
+      - name: Checkout plugin repository
+        uses: actions/checkout@v4
+        with:
+          path: plugin-repo
+
+      - name: Checkout N.E.K.O
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.NEKO_REPOSITORY }}
+          ref: ${{ env.NEKO_REF }}
+          path: neko
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Mount plugin into N.E.K.O tree
+        run: |
+          set -euo pipefail
+          # 与市场 verify 的挂载契约一致：目录名必须等于 plugin id，
+          # 否则 plugin.toml 里 plugin.plugins.<id> 的包路径对不上。
+          if [ ! -f plugin-repo/plugin.toml ]; then
+            echo "plugin-repo/plugin.toml 不存在" >&2
+            exit 1
+          fi
+          rm -rf "neko/plugin/plugins/${PLUGIN_ID}"
+          cp -a plugin-repo "neko/plugin/plugins/${PLUGIN_ID}"
+          rm -rf "neko/plugin/plugins/${PLUGIN_ID}/.git"
+          test -f "neko/plugin/plugins/${PLUGIN_ID}/plugin.toml"
+
+      - name: Install N.E.K.O dependencies
+        working-directory: neko
+        run: uv sync
+
+      - name: Run plugin tests
+        working-directory: neko
+        run: uv run pytest "plugin/plugins/${PLUGIN_ID}/tests" -q
