@@ -134,6 +134,61 @@ class PluginLifecycleTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.value["status"], "config_updated")
         self.assertIn("正式克制", plugin._prompt)
 
+    async def test_config_change_uses_new_config_argument(self) -> None:
+        """宿主递进来的 new_config 优先：不依赖 dump 的时序。"""
+        ctx = _FakeCtx(GOOD)
+        plugin = self.plugin_cls(ctx)
+        await plugin.on_startup()
+
+        # 故意让 dump 返回旧值，只有 new_config 带新值；重推必须跟着 new_config。
+        new_config = {"voice_card": {**GOOD, "self": "宿主递来的自称"}}
+        result = await plugin.on_config_change(new_config=new_config)
+
+        self.assertTrue(result.is_ok())
+        self.assertEqual(plugin._card["self"], "宿主递来的自称")
+        self.assertIn("自称：宿主递来的自称", plugin._prompt)
+        self.assertNotIn("自称：我\n", plugin._prompt)
+
+    async def test_config_change_falls_back_to_dump_without_new_config(self) -> None:
+        """没有 new_config（旧宿主或直接调方法）时仍然走 dump。"""
+        ctx = _FakeCtx(GOOD)
+        plugin = self.plugin_cls(ctx)
+        await plugin.on_startup()
+
+        ctx.section = {**GOOD, "self": "dump 里的自称"}
+        await plugin.on_config_change()
+
+        self.assertEqual(plugin._card["self"], "dump 里的自称")
+
+    async def test_config_change_ignores_new_config_without_section(self) -> None:
+        """new_config 不是 dict 或缺 voice_card 段时，退回 dump，不把卡清空。"""
+        ctx = _FakeCtx(GOOD)
+        plugin = self.plugin_cls(ctx)
+        await plugin.on_startup()
+
+        result = await plugin.on_config_change(new_config=None)
+        self.assertTrue(result.is_ok())
+        self.assertEqual(plugin._card["self"], GOOD["self"])
+
+        result = await plugin.on_config_change(new_config={"plugin_runtime": {"enabled": True}})
+        self.assertTrue(result.is_ok())
+        self.assertEqual(plugin._card["self"], GOOD["self"])
+        self.assertTrue(plugin._prompt, "缺段时不能把已渲染的卡清空")
+
+    async def test_config_change_repushes_from_new_config(self) -> None:
+        """热更新重推的必须是 new_config 的内容，不是 dump 的旧值。"""
+        ctx = _FakeCtx({**GOOD, "inject_on_startup": True})
+        plugin = self.plugin_cls(ctx)
+        await plugin.on_startup()
+
+        result = await plugin.on_config_change(
+            new_config={"voice_card": {**GOOD, "register": "formal", "inject_on_startup": True}}
+        )
+
+        self.assertEqual(len(ctx.pushed), 2)
+        self.assertTrue(result.value["injected"])
+        self.assertIn("正式克制", ctx.pushed[1]["parts"][0]["text"])
+
     async def test_shutdown_clears_prompt(self) -> None:
         plugin = self.plugin_cls(_FakeCtx(GOOD))
         await plugin.on_startup()
@@ -189,6 +244,12 @@ class PluginLifecycleTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("以上只影响措辞", "\n".join(ctx.logger.warnings), "日志不应写入正文")
 
     async def test_reload_repushes_with_same_coalesce_key(self) -> None:
+        """直接调 ``on_reload``：验证方法本身会重推，**不**模拟宿主派发。
+
+        当前宿主（``plugin/core/host.py``）没有 ``reload`` 的派发点，插件重载实际走
+        「停进程再启动」→ ``startup``。所以这条只保证「方法被调用时行为正确」，
+        不代表宿主会调它。
+        """
         ctx = _FakeCtx({**GOOD, "inject_on_startup": True})
         plugin = self.plugin_cls(ctx)
         await plugin.on_startup()

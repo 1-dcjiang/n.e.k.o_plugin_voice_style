@@ -85,6 +85,13 @@ class VoiceStylePlugin(NekoPluginBase):
 
     @lifecycle(id="reload")
     async def on_reload(self, **_: Any):
+        """保留给声明了 ``reload`` 的宿主；当前宿主不派发这个钩子。
+
+        ``plugin/core/host.py`` 只派发 startup / unfreeze / freeze / shutdown /
+        config_change（没有 ``lifecycle_events.get("reload")``），所以插件重载实际
+        走的是「停进程再启动」→ ``startup``。这个钩子在 SDK 契约里是合法 id，保留
+        它对新宿主无害；行为与 ``on_startup`` 一致，不依赖调用方是谁。
+        """
         await self._reload_card()
         payload = {"status": "reloaded", "valid": not self._problems}
         if self._inject_on_startup:
@@ -93,8 +100,21 @@ class VoiceStylePlugin(NekoPluginBase):
         return Ok(payload)
 
     @lifecycle(id="config_change")
-    async def on_config_change(self, **_: Any):
-        await self._reload_card()
+    async def on_config_change(self, new_config: Any = None, **_: Any):
+        """热更新：优先用宿主递进来的 ``new_config``，拿不到再回退 ``dump()``。
+
+        ``host.py`` 的 CONFIG_UPDATE 在触发本钩子之前，已经把 ``new_config`` 深合并
+        进 ``ctx._effective_config``（见 ``host.py:792-798``），随后把整份配置作为
+        ``new_config=`` 传进来（``host.py:808-816``）。而 ``config.dump()`` 经
+        ``profile_effective → get_own_config → _get_local_config_payload`` 命中的
+        正是同一份缓存（``context.py:1938-1945``）。两条路同源，不存在「临时热更新
+        重推旧卡」；直接用参数只是为了少一跳，并且在缓存被标成 uncertain 时仍拿到
+        宿主这次的合并结果。
+        """
+        section = None
+        if isinstance(new_config, dict) and isinstance(new_config.get(SECTION), Mapping):
+            section = dict(new_config[SECTION])
+        await self._reload_card(section)
         payload = {"status": "config_updated", "valid": not self._problems}
         if self._inject_on_startup:
             payload["injected"] = self._maybe_push()
@@ -162,8 +182,15 @@ class VoiceStylePlugin(NekoPluginBase):
             return {}
         return section
 
-    async def _reload_card(self) -> None:
-        section = await self._read_section()
+    async def _reload_card(self, section: Mapping[str, Any] | None = None) -> None:
+        """读配置段并重算缓存。``section`` 为 None 时走 ``config.dump()``。
+
+        ``config_change`` 会直接把宿主递来的段传进来，省掉一次 dump 往返。
+        """
+        if section is None:
+            section = await self._read_section()
+        else:
+            section = dict(section)
 
         self._unknown_keys = sorted(set(section) - set(ALLOWED_KEYS) - EXTRA_KEYS)
         unknown_signature = tuple(self._unknown_keys)

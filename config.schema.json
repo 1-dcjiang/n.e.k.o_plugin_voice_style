@@ -108,7 +108,7 @@
             "zh-CN": "角色如何称呼自己，例如「我」「本机」「姐姐」。只影响措辞。",
             "zh-TW": "角色如何稱呼自己，例如「我」「本機」「姐姐」。只影響措辭。",
             "en": "How the character refers to itself, for example 我 / 本机 / 姐姐. Only affects wording.",
-            "ja": "キャラクターが自分を自称する呼び方だけに影響します。"
+            "ja": "キャラクターが自分を何と呼ぶか。例：「我」「本机」「姐姐」。言い方だけに影響します。"
           },
           "default": "我"
         },
@@ -244,7 +244,7 @@
             "zh-CN": "默认关闭。开启后在启动时把渲染文本作为只读上下文消息推送。它是聊天消息而非系统提示词，历史压缩可能丢弃，宿主也可能把它包成「来自插件的新消息」。",
             "zh-TW": "預設關閉。開啟後在啟動時把渲染文字作為唯讀上下文訊息推送。它是聊天訊息而非系統提示詞，歷史壓縮可能丟棄，宿主也可能包成「來自外掛程式的新訊息」。",
             "en": "Off by default. When on, the plugin pushes the rendered text as a read-only context message at startup. It is a chat message, not a system prompt, so history compaction may drop it and the host may wrap it as a plugin message.",
-            "ja": "既定ではオフ。オンにすると起動時に描画テキストを読み取り専用のコンテキストメッセージとして送ります。システムプロンプトではなくチャットメッセージのため、履歴圧縮で失われる可能性があります。"
+            "ja": "既定ではオフ。オンにすると起動時に描画テキストを読み取り専用のコンテキストメッセージとして送ります。システムプロンプトではなくチャットメッセージのため、履歴圧縮で失われる可能性があり、ホストが「プラグインからの新着メッセージ」として包むこともあります。"
           },
           "default": false
         }

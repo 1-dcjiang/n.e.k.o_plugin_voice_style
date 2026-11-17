@@ -27,5 +27,17 @@ code-abyss 的 Persona Voice Card v1.0：
          inject_on_startup 只接受真正的 bool；未知键与坏类型 warning 去重；
          README 明确当前角色卡没有可编辑的 system_prompt 入口，需主程序支持；
          新增配置一致性与真 SDK 契约测试，修复默认值漂移与 Ruff 问题。
+  0.1.3  config_change 直接用宿主递进来的 new_config（缺段时回退 dump）；
+         配置一致性测试改为按文件路径加载，不再依赖当前目录；
+         契约测试按 plugin.toml 的 entry 加载，不再写死包名，并补上真正
+         跑 pytest 的 tests.yml（市场 verify 不跑插件测试）；
+         README 如实说明宿主不派发 reload 钩子、重载由 startup 承担；
+         补齐日文 self 与 inject_on_startup 描述；NOTICE 补分发与协议声明。
 
 本插件不包含记忆、人格或事实层，也不会写入宿主的角色卡与记忆。
+
+分发与协议：
+  源码以 MIT License 发布（见本目录 LICENSE）。通过 N.E.K.O 插件市场分发时，
+  还需遵守市场网站自身的投稿协议与服务条款——那部分约束独立于本仓库的 MIT
+  许可，也不因本文件未逐条复述而免除。本插件不内置第三方素材、不抓取外部数据，
+  运行时不联网，所以没有额外的数据来源许可需要声明。

@@ -119,8 +119,16 @@ prompt 时，按 `persona_override.prompt_guidance` / 人设预设追加的，�
 
 把 `inject_on_startup` 设为 `true`。插件在 `startup` 调
 `push_message(visibility=[], ai_behavior="read", coalesce_key="voice_style:card")`，
-把渲染文本作为只读上下文推进对话。`reload` / `config_change` 后如果开关仍开着，
+把渲染文本作为只读上下文推进对话。`config_change`（热更新）后如果开关仍开着，
 会按同一个 `coalesce_key` 重推，避免配置改了模型还拿旧卡。
+
+关于 `reload`：插件保留了 `@lifecycle(id="reload")`，但当前宿主
+（`plugin/core/host.py`）只派发 `startup` / `unfreeze` / `freeze` / `shutdown` /
+`config_change`，**没有 `reload` 的派发点**——`reload_plugin` 是「停进程再启动」，
+所以重载实际由 `startup` 承担。这个钩子在 SDK 契约里是合法 id，保留它对新宿主
+无害，但不要指望它在当前宿主里被调用。`tests/test_plugin.py` 里那条
+`test_reload_repushes_with_same_coalesce_key` 是**直接调方法**，验证的是「方法本身
+会重推」，不模拟宿主派发。
 
 这是**聊天消息**，不是系统提示词，因此：
 
@@ -132,7 +140,7 @@ prompt 时，按 `persona_override.prompt_guidance` / 人设预设追加的，�
 `push_message` 的返回值只代表 SDK 本地接收，不代表宿主消费或模型生成。插件会检查
 `submitted`：返回 `submitted=False`（如 `backpressure` / `transport_error` /
 `payload_too_large`）时只记一条带 `reason` 的 warning，不把正文写进日志，并在
-`startup` / `reload` / `config_change` 的返回值里给出 `injected=false`；不会当成成功。
+`startup` / `config_change` 的返回值里给出 `injected=false`；不会当成成功。
 
 所以默认关闭。README 不把方案 B 说成「推荐」，也不宣称它已验证。
 
@@ -169,7 +177,7 @@ prompt 时，按 `persona_override.prompt_guidance` / 人设预设追加的，�
 | `voice_card_status` | 只读：校验结果、渲染长度、当前字段值、未知配置键 |
 
 插件是 `passive = true`：它不参与 Agent 主动分派，入口在插件面板里执行。
-如果你希望模型能自己调用它，把 `plugin.toml` 的 `passive` 改成 `false` 并 reload。
+如果你希望模型能自己调用它，把 `plugin.toml` 的 `passive` 改成 `false` 并重启/重载插件。
 
 ---
 
@@ -191,11 +199,18 @@ ruff check --ignore-noqa --isolated --no-respect-gitignore --target-version py31
 其它测试。
 
 如果测试运行时能找到真 SDK（例如把本仓库挂到
-`neko/plugin/plugins/voice_style`，并在那棵树里跑测试，向上两级就是
-`neko/plugin/sdk`），`tests/test_real_sdk_contract.py` 会在一个独立子进程里用真
-`NekoPluginBase` 实例化插件并跑 `collect_entries`，检查入口 id、生命周期与
-`push_message` 的 `coalesce_key` 参数没有和宿主契约脱节；找不到真 SDK 时明确 skip。
+`<neko>/plugin/plugins/voice_style`，向上两级就是 `neko/plugin/sdk`；或用
+`NEKO_SDK_ROOT` 指向 `<neko>/plugin`），`tests/test_real_sdk_contract.py` 会在一个
+独立子进程里按 `plugin.toml` 的 `[plugin].entry` 加载插件类，用真 `NekoPluginBase`
+实例化并跑 `collect_entries`，检查入口 id、生命周期与 `push_message` 的
+`coalesce_key` 参数没有和宿主契约脱节；找不到真 SDK 时明确 skip。
 「逻辑对不对」由替身测试保证，「接口接不接得上」由真 SDK 契约测试兜底，两件事分开。
+
+这条契约测试**不会在市场 CI 里跑**：本仓的 `verify.yml` 只是复用市场模板
+（`plugin-market-verify.yml@main`），那个 reusable workflow 只跑 Ruff、CLI 的
+`sync` / `check` 和 evidence 生成，没有插件 pytest 步骤。真正会跑它的是本仓自己的
+`.github/workflows/tests.yml`（checkout N.E.K.O → 挂进 `plugin/plugins/voice_style`
+→ 跑 pytest）。
 
 ---
 

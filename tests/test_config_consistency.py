@@ -6,22 +6,30 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import tomllib
 import unittest
 from pathlib import Path
 
-from voice_card import (
-    ALLOWED_KEYS,
-    DEFAULT_CARD,
-    EMOJI_POLICIES,
-    LIMITS,
-    MAX_FLOURISH,
-    MAX_FLOURISH_LEN,
-    REGISTERS,
-)
-
 ROOT = Path(__file__).resolve().parents[1]
+
+# 与 test_voice_card.py 用同一套写法：用文件路径直接加载，避免改动 sys.path 触发
+# E402（市场 CI 带 --ignore-noqa），也不依赖「当前目录恰好是仓库根」。
+# tests/ 下没有 __init__.py，裸 pytest 插入的 sys.path 是 tests/ 而不是仓库根，
+# 直接 `from voice_card import ...` 会 ModuleNotFoundError。
+_spec = importlib.util.spec_from_file_location("voice_card", ROOT / "voice_card.py")
+assert _spec is not None and _spec.loader is not None
+vc = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(vc)
+
+ALLOWED_KEYS = vc.ALLOWED_KEYS
+DEFAULT_CARD = vc.DEFAULT_CARD
+EMOJI_POLICIES = vc.EMOJI_POLICIES
+LIMITS = vc.LIMITS
+MAX_FLOURISH = vc.MAX_FLOURISH
+MAX_FLOURISH_LEN = vc.MAX_FLOURISH_LEN
+REGISTERS = vc.REGISTERS
 
 
 def _toml(name: str) -> dict:
